@@ -257,6 +257,7 @@ class TranscriptionManager(QObject):
             self._emit_stats()
             return
         self._set_state("idle" if not self._vad or not self._vad.in_speech else "listening")
+        logger.info("partial result: text=%r", result.text)
         if result.text:
             self.partial_text_changed.emit(self._text_processor.full_text(result.text))
 
@@ -269,6 +270,7 @@ class TranscriptionManager(QObject):
             self._emit_stats()
             return
         self._set_state("idle")
+        logger.info("final result: text=%r", result.text)
         if result.text:
             committed = self._text_processor.commit_final(result.text)
             self.final_text_changed.emit(committed)

@@ -80,7 +80,14 @@ jobs:
             main.py
 
       - name: Zip the .app bundle
-        run: ditto -c -k --sequesterRsrc --keepParent dist/LiveSpeechSTT.app dist/LiveSpeechSTT-macos.zip
+        run: |
+          # Resolve all symlinks into real files first (-L). Python.framework is full of
+          # them (Versions/Current -> 3.11, Python -> Versions/Current/Python, etc.) and
+          # actions/upload-artifact's zip handling does not reliably preserve symlinks --
+          # a corrupted one turns into a text file containing just the link target, which
+          # breaks dyld with "slice is not valid mach-o file" on the user's machine.
+          cp -RL dist/LiveSpeechSTT.app dist/LiveSpeechSTT-resolved.app
+          ditto -c -k --sequesterRsrc --keepParent dist/LiveSpeechSTT-resolved.app dist/LiveSpeechSTT-macos.zip
 
       - uses: actions/upload-artifact@v4
         with:

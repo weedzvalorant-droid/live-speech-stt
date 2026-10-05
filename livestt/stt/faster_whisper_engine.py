@@ -53,8 +53,10 @@ class FasterWhisperEngine(SpeechRecognizer):
         device, compute_type = _resolve_device_and_compute_type(self._use_gpu, self._compute_type_setting)
         logger.info("Loading faster-whisper model=%s device=%s compute_type=%s", self._model_size, device, compute_type)
         self._model = WhisperModel(self._model_size, device=device, compute_type=compute_type)
-        # Dummy pass to force CUDA/kernel initialization off the hot path.
-        self._model.transcribe(np.zeros(16000, dtype=np.float32), language="en", beam_size=1)
+        # Dummy pass to force CUDA/kernel initialization off the hot path. `segments` is a
+        # lazy generator -- it must actually be iterated, or no decoding happens at all.
+        segments, _ = self._model.transcribe(np.zeros(16000, dtype=np.float32), language="en", beam_size=1)
+        list(segments)
         logger.info("faster-whisper model ready")
 
     def transcribe(
@@ -67,6 +69,8 @@ class FasterWhisperEngine(SpeechRecognizer):
 
         with self._lock:
             try:
+                peak = float(np.max(np.abs(audio))) if audio.size else 0.0
+                rms = float(np.sqrt(np.mean(np.square(audio, dtype=np.float64)))) if audio.size else 0.0
                 segments, info = self._model.transcribe(
                     audio,
                     language=language_hint,
@@ -75,8 +79,23 @@ class FasterWhisperEngine(SpeechRecognizer):
                     condition_on_previous_text=False,
                     without_timestamps=True,
                 )
+                segments = list(segments)  # materialize once: it's a lazy generator
                 text = "".join(seg.text for seg in segments).strip()
                 detected_lang = getattr(info, "language", None)
+                no_speech_probs = [round(getattr(s, "no_speech_prob", -1), 3) for s in segments]
+                logger.info(
+                    "whisper(final=%s): %.2fs audio, peak=%.4f rms=%.4f, lang=%s(p=%.2f), "
+                    "%d segment(s), no_speech_prob=%s, text=%r",
+                    is_final,
+                    audio.size / sample_rate,
+                    peak,
+                    rms,
+                    detected_lang,
+                    getattr(info, "language_probability", -1.0),
+                    len(segments),
+                    no_speech_probs,
+                    text,
+                )
                 return TranscriptionResult(text=text, is_final=is_final, language=detected_lang)
             except Exception as exc:
                 logger.error("faster-whisper transcription failed: %s", exc)
