@@ -1,0 +1,12 @@
+venv/
+venv-test/
+dist/
+build/
+installer_output/
+*.spec
+__pycache__/
+*.pyc
+.pytest_cache/
+*.log
+logs/
+.DS_Store
