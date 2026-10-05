@@ -1,0 +1,30 @@
+# Core UI
+PySide6>=6.7
+
+# Numerics
+numpy>=1.24
+
+# System-audio capture.
+# Windows: WASAPI loopback via pyaudiowpatch (true system-audio capture, no extra driver).
+pyaudiowpatch>=0.2.12.post1; sys_platform == "win32"
+# macOS/other: plain PyAudio, used together with a free virtual audio driver (BlackHole)
+# that the user installs separately and routes system output into — see README.
+PyAudio>=0.2.14; sys_platform != "win32"
+
+# Voice Activity Detection (prebuilt wheels incl. Windows; avoids needing a C compiler)
+webrtcvad-wheels>=2.0.14.post1
+
+# Local speech-to-text (CTranslate2-based Whisper)
+faster-whisper>=1.0.3
+
+# Secure API-key storage (Windows Credential Locker via keyring)
+keyring>=25.2.1
+
+# Global hotkeys
+pynput>=1.7.6
+
+# Cloud STT provider (OpenAI-compatible REST API)
+requests>=2.31
+
+# Packaging
+pyinstaller>=6.6
