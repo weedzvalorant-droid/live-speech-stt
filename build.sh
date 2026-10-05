@@ -13,6 +13,7 @@ echo "Building LiveSpeechSTT.app with PyInstaller..."
 pyinstaller --name LiveSpeechSTT --windowed --onedir --noconfirm \
     --icon=assets/icon.icns \
     --add-data "assets:assets" \
+    --additional-hooks-dir=pyinstaller_hooks \
     --collect-all faster_whisper \
     --collect-all ctranslate2 \
     --hidden-import=webrtcvad \

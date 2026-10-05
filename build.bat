@@ -13,6 +13,7 @@ echo Building LiveSpeechSTT.exe with PyInstaller...
 pyinstaller --name LiveSpeechSTT --windowed --onedir --noconfirm ^
     --icon=assets\icon.ico ^
     --add-data "assets;assets" ^
+    --additional-hooks-dir=pyinstaller_hooks ^
     --collect-all faster_whisper ^
     --collect-all ctranslate2 ^
     --collect-all pyaudiowpatch ^
